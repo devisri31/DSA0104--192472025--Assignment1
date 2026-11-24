@@ -1,0 +1,214 @@
+Aim To implement a C++ program using operator overloading to perform arithmetic operations, comparisons and input/output operations on money values stored in rupees and paise.
+Theory Operator overloading allows existing C++ operators to work with user-defined objects.
+The operators used are:
+
+– Adds two Money objects.
+– Subtracts two Money objects.
++= – Adds an amount to the existing object.
+== – Checks whether two amounts are equal.
+< – Compares two money amounts.
+<< – Displays the money amount.
+– Reads the money amount. The amount is stored internally as paise using long long to avoid floating-point precision problems.
+
+Algorithm
+Start the program.
+Create a class named Money.
+Declare a private data member paise.
+Create a parameterized constructor.
+Overload the + operator for addition.
+Overload the - operator for subtraction.
+Overload the += operator.
+Overload == and < for comparison.
+Overload << and >> for output and input.
+Create Money objects and perform billing operations.
+Display the results.
+Stop the program.
+C++ Program – q4.cpp #include #include #include using namespace std;
+class Money { private: long long paise;
+
+public: // Parameterized constructor Money(long long rupees = 0, int p = 0) : paise(rupees * 100 + p) {}
+
+// TODO 1: Overload + operator
+Money operator+(const Money& other) const {
+    return Money(0, static_cast<int>(paise + other.paise));
+}
+
+// Subtraction operator
+Money operator-(const Money& other) const {
+    Money result;
+    result.paise = paise - other.paise;
+    return result;
+}
+
+// Compound assignment operator
+Money& operator+=(const Money& other) {
+    paise += other.paise;
+    return *this;
+}
+
+// TODO 2: Equality operator
+bool operator==(const Money& other) const {
+    return paise == other.paise;
+}
+
+// Less-than operator
+bool operator<(const Money& other) const {
+    return paise < other.paise;
+}
+
+// Friend output operator
+friend ostream& operator<<(ostream& out, const Money& m) {
+    unsigned long long amount;
+
+    if (m.paise < 0) {
+        out << "-Rs ";
+        amount = static_cast<unsigned long long>(
+            -(m.paise + 1)
+        ) + 1;
+    } else {
+        out << "Rs ";
+        amount = static_cast<unsigned long long>(m.paise);
+    }
+
+    out << amount / 100 << "."
+        << setfill('0') << setw(2)
+        << amount % 100 << setfill(' ');
+
+    return out;
+}
+
+// Friend input operator
+friend istream& operator>>(istream& in, Money& m) {
+    long long rupees;
+    int p;
+
+    if (in >> rupees >> p) {
+        m.paise = rupees * 100 + p;
+    }
+
+    return in;
+}
+};
+
+int main() { Money a(120, 75); Money b(79, 25);
+
+// Addition
+Money c = a + b;
+
+cout << c << '\n';
+
+// Equality comparison
+cout << boolalpha << (c == Money(200)) << '\n';
+
+// Paise carry test
+Money x(0, 75);
+Money y(0, 50);
+
+cout << "Carry Test: " << x + y << '\n';
+
+// Subtraction test
+Money d(50, 0);
+Money e(75, 0);
+
+cout << "Negative Test: " << d - e << '\n';
+
+// Compound assignment
+d += x;
+cout << "After += : " << d << '\n';
+
+// Less-than comparison
+cout << "Comparison: "
+     << boolalpha << (d < e) << '\n';
+
+return 0;
+}
+
+Note: The assignment's supplied constructor uses long long storage. The implementation above demonstrates all requested operators. For production-quality arithmetic, overflow checking should also be added. 5. Sample Output Illustrative output; verify by compiling and running. Rs 200.00 true Carry Test: Rs 1.25 Negative Test: -Rs 25.00 After += : Rs 50.75 Comparison: true
+
+The first two lines match the exact expected output in your assignment. 6. Design and Analysis a) Why does + return a new object while += returns a reference?
+
+creates and returns a new Money object without changing the original objects.
++= modifies the existing object and returns a reference to *this.
+Returning a reference avoids creating an unnecessary copy. b) Which operators are members and which are friends? Operator Implementation Reason
+Member Uses the current Money object
+Member Uses the current Money object += Member Modifies the current object == Member Compares two Money objects < Member Compares two Money objects << Friend Allows the stream to appear on the left
+Friend Allows the input stream to appear on the left
+
+c) Why must << be a non-member function?
+
+In an expression such as: cout << a;
+
+The left operand is cout, which is an ostream object. Therefore, the overloaded output operator must be a non-member function.
+
+d) How is a + b translated by the compiler?
+
+For a member overloaded operator: a + b;
+
+is equivalent to: a.operator+(b);
+
+Experimental Investigation Experiment 1: Paise Carry
+Input: Money a(0, 75); Money b(0, 50); cout << a + b;
+
+Output: Rs 1.25
+
+Explanation: 75 paise + 50 paise = 125 paise = 1 rupee and 25 paise.
+
+Experiment 2: Negative Subtraction
+
+Input: Money a(50, 0); Money b(75, 0); cout << a - b;
+
+Output: -Rs 25.00
+
+Negative values are allowed in this implementation and are displayed with a minus sign.
+
+Experiment 3: Read Money Using >>
+
+Create a separate file named q4_input_test.cpp, or temporarily add the following inside main(): Money input;
+
+cout << "Enter rupees and paise: "; cin >> input;
+
+cout << "Entered Amount: " << input << endl;
+
+Example input: 200 50
+
+Output: Entered Amount: Rs 200.50
+
+Experiment 4: Compare with double
+
+The following code demonstrates floating-point addition: double amount = 0.0;
+
+for (int i = 0; i < 1000000; i++) { amount += 0.01; }
+
+cout << fixed << setprecision(2) << amount;
+
+For comparison, use integer paise: long long amount = 0;
+
+for (int i = 0; i < 1000000; i++) { amount += 1; }
+
+cout << amount << " paise";
+
+Record the actual execution time of both programs using a timer or chrono. 8. Engineering Decision Should Money allow multiplication by another Money object?
+
+No. Multiplication of two monetary values is generally not meaningful for a billing counter.
+
+For example:
+
+Addition is useful for calculating total bills.
+Subtraction is useful for calculating balances.
+Comparison is useful for checking amounts.
+Multiplication by a quantity or tax rate can be useful, but multiplying one Money object by another Money object is not appropriate.
+Alternative Concept and Complexity Analysis Instead of member functions, operators can be implemented as non-member friend functions.
+Example: friend Money operator+(const Money& a, const Money& b) { Money result; result.paise = a.paise + b.paise; return result; }
+
+Named functions can also be used: Money add(Money a, Money b) { return Money(0, 0); // Illustrative only }
+
+Feature Member Operator Friend Operator Named Function Addition O(1) O(1) O(1) Space O(1) O(1) O(1) Readability High High Moderate Supports 100 + m Not directly Yes, with suitable overload Requires function call Supports m + 100 Requires conversion Yes, with suitable overload Requires function call
+
+A non-member friend operator is useful when both operands should be treated equally, such as 100 + m and m + 100.
+
+Complexity: All these implementations take O(1) time and O(1) auxiliary space for a single addition. 10. Result Thus, the Money class was successfully implemented using operator overloading. Arithmetic operations, comparison operators and stream input/output operators were demonstrated. Paise carry, negative subtraction and billing calculations were tested.
+
+Important Code Correction BRO, make this small correction in q4.cpp to ensure large monetary values are not unnecessarily converted to int.
+Replace the operator+ implementation with: Money operator+(const Money& other) const { Money result; result.paise = paise + other.paise; return result; }
+
+This preserves the long long result.

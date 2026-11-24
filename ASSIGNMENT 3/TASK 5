@@ -1,0 +1,285 @@
+Aim To implement a C++ program that overloads prefix and postfix increment operators, comparison operators, and the subscript operator using a Time class and a Playlist class.
+Problem Description A music player maintains a playlist of tracks and a Time object to represent the current playback position.
+The program must:
+
+Overload prefix and postfix ++ to advance time by one second.
+Overload == and < to compare two Time objects.
+Overload [] in the Playlist class to access tracks.
+Include range checking for invalid playlist indexes.
+Demonstrate the operators through a playback simulation.
+C++ Program Create a file named q5.cpp.
+#include #include #include #include #include using namespace std;
+
+class Time { private: int totalSeconds;
+
+public: Time(int h = 0, int m = 0, int s = 0) { totalSeconds = h * 3600 + m * 60 + s; }
+
+// Prefix increment
+Time& operator++() {
+    ++totalSeconds;
+    return *this;
+}
+
+// Postfix increment
+Time operator++(int) {
+    Time old = *this;
+    ++totalSeconds;
+    return old;
+}
+
+// Equality operator
+bool operator==(const Time& other) const {
+    return totalSeconds == other.totalSeconds;
+}
+
+// Less-than operator
+bool operator<(const Time& other) const {
+    return totalSeconds < other.totalSeconds;
+}
+
+void display() const {
+    int h = totalSeconds / 3600;
+    int m = (totalSeconds % 3600) / 60;
+    int s = totalSeconds % 60;
+
+    cout << setfill('0')
+         << setw(2) << h << ":"
+         << setw(2) << m << ":"
+         << setw(2) << s
+         << setfill(' ');
+}
+};
+
+class Playlist { private: vector tracks;
+
+public: Playlist(vector t) : tracks(t) {}
+
+// Non-const subscript operator
+string& operator[](int index) {
+    if (index < 0 || index >= static_cast<int>(tracks.size())) {
+        throw out_of_range("Invalid playlist index");
+    }
+    return tracks[index];
+}
+
+// Const subscript operator
+const string& operator[](int index) const {
+    if (index < 0 || index >= static_cast<int>(tracks.size())) {
+        throw out_of_range("Invalid playlist index");
+    }
+    return tracks[index];
+}
+
+int size() const {
+    return static_cast<int>(tracks.size());
+}
+};
+
+int main() { cout << "MUSIC PLAYER SIMULATION\n";
+
+// Increment operator demonstration
+Time t(0, 0, 5);
+
+Time a = t++;
+Time b = ++t;
+
+cout << "\nPostfix result: ";
+a.display();
+
+cout << "\nPrefix result: ";
+b.display();
+
+cout << "\nCurrent time: ";
+t.display();
+
+// Comparison operators
+Time x(0, 0, 7);
+Time y(0, 0, 10);
+
+cout << "\n\nTime Comparison:\n";
+cout << boolalpha;
+cout << "x == t: " << (x == t) << endl;
+cout << "x < y: " << (x < y) << endl;
+
+// Playlist demonstration
+Playlist songs({"Perfect", "Shape of You", "Believer"});
+
+cout << "\nPlaylist:\n";
+
+for (int i = 0; i < songs.size(); i++) {
+    cout << i << ". " << songs[i] << endl;
+}
+
+// Modify a track using non-const operator[]
+songs[1] = "Photograph";
+
+cout << "\nUpdated second track: " << songs[1] << endl;
+
+// Minute and hour rollover
+Time rollover(0, 59, 59);
+++rollover;
+
+cout << "\nAfter rollover: ";
+rollover.display();
+
+// Invalid index testing
+cout << "\n\nRange Check:\n";
+
+try {
+    cout << songs[-1] << endl;
+}
+catch (const out_of_range& e) {
+    cout << e.what() << endl;
+}
+
+try {
+    cout << songs[songs.size()] << endl;
+}
+catch (const out_of_range& e) {
+    cout << e.what() << endl;
+}
+
+return 0;
+}
+
+Expected Output Illustrative output — run your program and capture your own terminal screenshot. MUSIC PLAYER SIMULATION
+Postfix result: 00:00:05 Prefix result: 00:00:07 Current time: 00:00:07
+
+Time Comparison: x == t: true x < y: true
+
+Playlist: 0. Perfect
+
+Shape of You
+Believer
+Updated second track: Photograph
+
+After rollover: 01:00:00
+
+Range Check: Invalid playlist index Invalid playlist index
+
+Design and Analysis A. Difference between prefix and postfix increment Prefix ++i Postfix i++ Increments first Returns the old value first Returns a reference Returns a copy Does not require an extra temporary object Creates a temporary copy Generally preferred for class objects Used when the old value is required
+The compiler distinguishes them using the dummy int parameter. Time& operator++(); // Prefix Time operator++(int); // Postfix
+
+B. Why does postfix return a copy?
+
+Postfix increment must preserve the original value before incrementing. Therefore, it creates a temporary copy and returns that old value.
+
+C. Why are two versions of operator[] required?
+
+Non-const operator[] allows modification of a playlist track.
+Const operator[] allows reading tracks from a constant Playlist object without modifying it. D. What happens when an index is out of range?
+The program checks whether the index is negative or greater than or equal to the playlist size. If invalid, it throws std::out_of_range instead of accessing invalid memory. 6. Experimental Investigation Experiment 1: Prefix and postfix values Given: Time t(0, 0, 5);
+
+Time a = t++; Time b = ++t;
+
+Variable Value Initial t 5 seconds a = t++ 5 seconds b = ++t 7 seconds Final t 7 seconds
+
+Experiment 2: Performance of prefix and postfix The assignment requires measuring 10,000,000 increments at -O0 and -O2.
+
+Create a separate file named q5_benchmark.cpp:
+
+#include #include using namespace std; using namespace chrono;
+
+struct Counter { long long value = 0;
+
+Counter& operator++() {
+    ++value;
+    return *this;
+}
+
+Counter operator++(int) {
+    Counter old = *this;
+    ++value;
+    return old;
+}
+};
+
+int main() { const int N = 10000000; Counter c;
+
+auto start = high_resolution_clock::now();
+
+for (int i = 0; i < N; i++) {
+    ++c;
+}
+
+auto end = high_resolution_clock::now();
+
+cout << "Prefix time: "
+     << duration<double, milli>(end - start).count()
+     << " ms\n";
+
+c.value = 0;
+
+start = high_resolution_clock::now();
+
+for (int i = 0; i < N; i++) {
+    c++;
+}
+
+end = high_resolution_clock::now();
+
+cout << "Postfix time: "
+     << duration<double, milli>(end - start).count()
+     << " ms\n";
+
+cout << "Final value: " << c.value << endl;
+
+return 0;
+}
+
+Compile and run using these commands: g++ -std=c++17 -O0 q5_benchmark.cpp -o benchmark_O0 ./benchmark_O0
+
+g++ -std=c++17 -O2 q5_benchmark.cpp -o benchmark_O2 ./benchmark_O2
+
+Record your actual results: Optimization Prefix time Postfix time -O0 Record actual result Record actual result -O2 Record actual result Record actual result
+
+Do not enter estimated timings as measured results. Compiler optimization may reduce or eliminate the performance difference. Experiment 3: Invalid playlist indexes Test: songs[-1]; songs[songs.size()];
+
+Expected result: Both accesses throw an out_of_range exception, which is caught and displays an error message. Experiment 4: Minute and hour rollover Test: Time t(0, 59, 59); ++t; t.display();
+
+Expected output: 01:00:00
+
+Predict the Output The assignment asks you to write the prediction before executing this program.
+Given program: #include
+
+struct Counter { int v;
+
+Counter& operator++() {
+    ++v;
+    return *this;
+}
+
+Counter operator++(int) {
+    Counter old = *this;
+    ++v;
+    return old;
+}
+};
+
+int main() { Counter c{5};
+
+Counter a = c++;
+Counter b = ++c;
+
+std::cout << a.v << ' ' << b.v << ' ' << c.v << '\n';
+}
+
+Predicted output 5 7 7
+
+Explanation:
+
+Initially, c = 5.
+
+a = c++ stores the old value 5 in a, then increments c to 6.
+
+b = ++c increments c to 7, then stores 7 in b.
+
+Therefore, a = 5, b = 7 and c = 7. The postfix version makes a copy of the original object.
+
+Alternative Concept and Complexity Analysis An alternative to overloading operator[] is using an at() function. string& at(int index) { if (index < 0 || index >= static_cast(tracks.size())) { throw out_of_range("Invalid index"); }
+
+return tracks[index]; }
+
+Operation Time complexity Extra space Prefix increment O(1) O(1) Postfix increment O(1) O(1) Comparison operators O(1) O(1) Checked operator[] O(1) O(1) at() function O(1) O(1) Unchecked array access O(1) O(1)
+
+Checked access performs an additional comparison before returning the element. All approaches have O(1) time complexity, but checked access provides better protection against invalid indexes. 9. Conclusion The program successfully demonstrates operator overloading using prefix and postfix increment, comparison operators and the subscript operator. Prefix increment is generally preferred for class objects because it avoids creating an unnecessary temporary copy. Range checking also improves program safety by preventing invalid playlist access.

@@ -1,0 +1,291 @@
+Problem Context: Auditorium Seat Booking
+
+Aim To implement a C++ program using dynamic constructors and destructors to allocate and release memory for a two-dimensional auditorium seat map. To understand object creation, destruction, dynamic memory allocation and Resource Acquisition Is Initialization (RAII).
+Theory A dynamic constructor allocates memory dynamically during object creation using the new operator.
+A destructor is a special member function that is automatically called when an object is destroyed. It releases dynamically allocated memory using delete or delete[].
+
+RAII (Resource Acquisition Is Initialization) is a programming technique in which resources are acquired during object construction and released automatically during object destruction. 3. Algorithm
+
+Start the program.
+Create a class named Auditorium.
+Declare rows, seats and a two-dimensional seat map.
+Allocate memory dynamically using new.
+Initialize all seats as available.
+Implement a function to book a seat.
+Implement a function to cancel a seat.
+Display the seat map.
+Implement a destructor to release all allocated memory.
+Create objects on the stack, heap and inside a block.
+Observe the order of constructor and destructor execution.
+Stop the program.
+C++ Program – q3.cpp #include #include using namespace std;
+class Auditorium { private: int rows; int seats; char** seatMap; int booked;
+
+public: // Dynamic Constructor Auditorium(int r, int s) : rows(r), seats(s), seatMap(nullptr), booked(0) {
+
+    if (rows < 0 || seats < 0) {
+        throw invalid_argument("Invalid auditorium dimensions");
+    }
+
+    if (rows > 0) {
+        seatMap = new char*[rows]();
+
+        try {
+            for (int i = 0; i < rows; i++) {
+                seatMap[i] = new char[seats];
+
+                for (int j = 0; j < seats; j++) {
+                    seatMap[i][j] = 'O';
+                }
+            }
+        }
+        catch (...) {
+            for (int i = 0; i < rows; i++) {
+                delete[] seatMap[i];
+            }
+            delete[] seatMap;
+            throw;
+        }
+    }
+
+    cout << "Auditorium created: "
+         << rows << " x " << seats << endl;
+}
+
+// Book a seat
+void bookSeat(int r, int s) {
+    if (r < 0 || r >= rows || s < 0 || s >= seats) {
+        cout << "Invalid seat position!" << endl;
+    }
+    else if (seatMap[r][s] == 'X') {
+        cout << "Seat already booked!" << endl;
+    }
+    else {
+        seatMap[r][s] = 'X';
+        booked++;
+        cout << "Seat booked successfully." << endl;
+    }
+}
+
+// Cancel a seat
+void cancelSeat(int r, int s) {
+    if (r < 0 || r >= rows || s < 0 || s >= seats) {
+        cout << "Invalid seat position!" << endl;
+    }
+    else if (seatMap[r][s] == 'O') {
+        cout << "Seat is already available." << endl;
+    }
+    else {
+        seatMap[r][s] = 'O';
+        booked--;
+        cout << "Booking cancelled successfully." << endl;
+    }
+}
+
+// Display seat map
+void display() const {
+    cout << "\nSeat Map:" << endl;
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < seats; j++) {
+            cout << seatMap[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    cout << "Total booked seats: " << booked << endl;
+}
+
+// Destructor
+~Auditorium() {
+    for (int i = 0; i < rows; i++) {
+        delete[] seatMap[i];
+    }
+
+    delete[] seatMap;
+
+    cout << "Auditorium destroyed. "
+         << "Total booked seats: " << booked << endl;
+}
+};
+
+int main() {
+
+cout << "1. Stack Object" << endl;
+
+Auditorium a1(2, 3);
+a1.bookSeat(0, 1);
+a1.bookSeat(1, 2);
+a1.display();
+
+cout << "\n2. Block Scope Object" << endl;
+
+{
+    Auditorium a2(2, 2);
+    a2.bookSeat(0, 0);
+    a2.display();
+}
+
+cout << "\n3. Heap Object" << endl;
+
+Auditorium* a3 = new Auditorium(3, 3);
+a3->bookSeat(1, 1);
+a3->display();
+
+delete a3;
+
+cout << "\nEnd of main function." << endl;
+
+return 0;
+}
+
+Sample Output Illustrative output — verify by executing your program.
+Stack Object Auditorium created: 2 x 3 Seat booked successfully. Seat booked successfully.
+Seat Map: O X O O O X Total booked seats: 2
+
+Block Scope Object Auditorium created: 2 x 2 Seat booked successfully.
+Seat Map: X O O O Total booked seats: 1 Auditorium destroyed. Total booked seats: 1
+
+Heap Object Auditorium created: 3 x 3 Seat booked successfully.
+Seat Map: O O O O X O O O O Total booked seats: 1 Auditorium destroyed. Total booked seats: 1
+
+End of main function. Auditorium destroyed. Total booked seats: 2
+
+Design and Analysis a) Order of constructors and destructors
+Stack objects are destroyed automatically when they leave their scope.
+Block-scope objects are destroyed when the block ends.
+Heap objects are destroyed only when delete is used.
+Destructors execute in reverse order of object construction within the same scope. b) What happens if delete is forgotten?
+If dynamically allocated memory is not released, a memory leak occurs. The program continues without freeing that memory.
+
+c) What happens if delete is used instead of delete[]?
+
+When an array is allocated using new[], it must be released using delete[]. Using delete instead causes undefined behaviour.
+
+d) Why does a destructor take no arguments and cannot be overloaded?
+
+A destructor has a fixed name, ~ClassName(), and takes no parameters. A class can have only one destructor because it performs a single object-cleanup operation. 7. Memory Layout of the Seat Map For a 2 × 3 auditorium: Auditorium Object +------------------+ | rows = 2 | | seats = 3 | | seatMap pointer | | booked = 2 | +--------|---------+ | v Row Pointer Array +-------+-------+ | Row 0 | Row 1 | +---|---+---|---+ | | v v +-------+ +-------+ | O X O | | O O X | +-------+ +-------+
+
+The row pointer array and each row are allocated separately using new. 8. Experimental Investigation Experiment 1: Constructor and Destructor Messages
+
+The program prints messages whenever an auditorium object is created or destroyed.
+
+Observed order: Object Creation Destruction a1 Stack End of main a2 Inside block End of block a3 Heap When delete is executed
+
+Experiment 2: Missing delete
+
+Create a separate file named q3_missing_delete.cpp. #include using namespace std;
+
+int main() { int* arr = new int[100];
+
+arr[0] = 10;
+
+cout << "Value: " << arr[0] << endl;
+
+// delete[] arr is intentionally missing
+
+return 0;
+}
+
+Compile: g++ -std=c++17 -g -fsanitize=address q3_missing_delete.cpp -o q3_missing
+
+Run: ./q3_missing
+
+Expected observation: AddressSanitizer may report a direct memory leak because the allocated array was not released.
+
+Experiment 3: Correct Memory Release
+
+Compile the main program: g++ -std=c++17 -Wall -Wextra -fsanitize=address -g q3.cpp -o q3
+
+Run: ./q3
+
+Expected observation: No memory errors should be reported during normal execution.
+
+Experiment 4: Memory Allocation Measurement
+
+Each seat is stored as a char, which normally occupies one byte. Seat Map Number of Seats Seat Data Memory 10 × 20 200 200 bytes 100 × 200 20,000 20,000 bytes 1,000 × 2,000 2,000,000 2,000,000 bytes
+
+These values exclude row pointers, allocator overhead and object memory.
+
+Experiment 5: Zero Rows
+
+Add this inside main(): Auditorium a4(0, 5); a4.display();
+
+Expected output: Auditorium created: 0 x 5
+
+Seat Map: Total booked seats: 0 Auditorium destroyed. Total booked seats: 0
+
+The program handles zero rows without allocating the row pointer array. 9. Conclusion – RAII RAII stands for Resource Acquisition Is Initialization.
+
+It makes programs safer because memory is allocated during object construction and automatically released during destruction.
+
+Advantages:
+
+Prevents memory leaks.
+Automatically releases resources.
+Improves memory management.
+Reduces the need for manual cleanup.
+Predict the Output The assignment also provides a Logger program. You must predict its output before executing it.
+Given program:
+
+#include #include using namespace std;
+
+struct Logger { string n;
+
+Logger(const string& s) : n(s) {
+    cout << '+' << n << ' ';
+}
+
+Logger(const Logger& o) : n(o.n + "c") {
+    cout << "copy" << n << ' ';
+}
+
+~Logger() {
+    cout << '-' << n << ' ';
+}
+};
+
+void use(Logger) { cout << "use "; }
+
+int main() { Logger a("A");
+
+{
+    Logger b("B");
+}
+
+use(a);
+
+Logger* p = new Logger("P");
+
+delete p;
+
+cout << "end ";
+}
+
+Predicted Output: +A +B -B copyAc use -Ac +P -P end -A
+
+Explanation:
+
+Logger a("A") creates object A.
+Logger b("B") creates object B inside the block.
+B is destroyed when the block ends.
+use(a) passes A by value, creating a copy named Ac.
+The copied object is destroyed when the function finishes.
+A heap object P is created using new.
+delete p destroys P.
+The word end is printed.
+A is destroyed at the end of main.
+Alternative Concept and Complexity Analysis The seat map can also be implemented using a single continuous memory block or a vector of vectors.
+Alternative 1: Single Block Allocation char* seatMap = new char[rows * seats];
+
+// Access seat using: seatMap[r * seats + s] = 'X';
+
+delete[] seatMap;
+
+Alternative 2: Vector of Vectors #include
+
+vector<vector> seatMap( rows, vector(seats, 'O') );
+
+Comparison: Feature Row Pointer Array Single Block Vector of Vectors Allocations rows + 1 1 Typically rows + 1 Access time O(1) O(1) O(1) Extra row pointers Yes No Managed internally Memory management Manual Manual Automatic
+
+The single-block approach uses fewer allocations and improves memory locality. Vector of vectors provides automatic memory management. 12. Result Thus, the auditorium seat-booking system was implemented successfully using dynamic memory allocation, constructors and destructors. Seat booking, cancellation, object lifetime and memory release were demonstrated.

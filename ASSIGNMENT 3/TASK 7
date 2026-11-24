@@ -1,0 +1,276 @@
+Aim To design and implement a Complex class in C++ using constructors and operator overloading to calculate AC circuit impedance. The program performs arithmetic operations on complex numbers and calculates series and parallel RLC circuit impedance.
+Stage 1 – Interpret the Problem (2 Marks) A. Data required A complex number consists of:
+Real part (R)
+Imaginary part (I) The complex number is represented as: [ Z = R + jI ]
+B. Required constructors
+
+Default constructor – initializes both parts to zero.
+Single-parameter constructor – initializes only the real part.
+Two-parameter constructor – initializes both real and imaginary parts. C. Required operations
+Addition +
+Subtraction -
+Multiplication *
+Division /
+Equality ==
+Output << D. Measurable requirements
+Perform all complex arithmetic operations correctly.
+Calculate series and parallel RLC impedance.
+Display impedance in rectangular form.
+Calculate the magnitude of impedance.
+Handle division by zero safely.
+Stage 2 – Design (3 Marks) A. Complex class design Component Purpose real Stores real part imag Stores imaginary part Default constructor Initializes zero Parameterized constructors Initialize complex values operator+ Adds two complex numbers operator- Subtracts two complex numbers operator* Multiplies two complex numbers operator/ Divides two complex numbers operator== Compares two complex numbers operator<< Displays complex numbers magnitude() Calculates impedance magnitude
+B. Mathematical formulas Let: [ Z_1=a+jb,\quad Z_2=c+jd ]
+
+Addition: [ Z_1+Z_2=(a+c)+j(b+d) ]
+
+Subtraction: [ Z_1-Z_2=(a-c)+j(b-d) ]
+
+Multiplication: [ Z_1Z_2=(ac-bd)+j(ad+bc) ]
+
+Division: [ \frac{Z_1}{Z_2}= \frac{(ac+bd)+j(bc-ad)}{c^2+d^2} ]
+
+Magnitude: [ |Z|=\sqrt{a^2+b^2} ]
+
+Parallel impedance: [ Z_p=\frac{Z_1Z_2}{Z_1+Z_2} ]
+
+For three parallel branches, combine them successively. C. Member and friend operators
+
++, -, *, / and == are member functions.
+<< is a friend function because the left operand is an output stream (cout), not a Complex object.
+Stage 3 – Implementation and Verification (3 Marks) A. C++ Program Create a file named q7.cpp.
+#include #include #include #include using namespace std;
+
+class Complex { private: double real; double imag;
+
+public: // Default constructor Complex() : real(0), imag(0) {}
+
+// Constructor with real part
+Complex(double r) : real(r), imag(0) {}
+
+// Constructor with real and imaginary parts
+Complex(double r, double i) : real(r), imag(i) {}
+
+// Addition
+Complex operator+(const Complex& other) const {
+    return Complex(real + other.real,
+                   imag + other.imag);
+}
+
+// Subtraction
+Complex operator-(const Complex& other) const {
+    return Complex(real - other.real,
+                   imag - other.imag);
+}
+
+// Multiplication
+Complex operator*(const Complex& other) const {
+    return Complex(
+        real * other.real - imag * other.imag,
+        real * other.imag + imag * other.real
+    );
+}
+
+// Division
+Complex operator/(const Complex& other) const {
+    double denominator =
+        other.real * other.real +
+        other.imag * other.imag;
+
+    if (denominator < 1e-12) {
+        throw domain_error("Division by zero impedance");
+    }
+
+    return Complex(
+        (real * other.real + imag * other.imag) / denominator,
+        (imag * other.real - real * other.imag) / denominator
+    );
+}
+
+// Equality comparison
+bool operator==(const Complex& other) const {
+    const double EPS = 1e-9;
+
+    return fabs(real - other.real) < EPS &&
+           fabs(imag - other.imag) < EPS;
+}
+
+// Magnitude
+double magnitude() const {
+    return sqrt(real * real + imag * imag);
+}
+
+// Output operator
+friend ostream& operator<<(ostream& out,
+                           const Complex& z) {
+    out << fixed << setprecision(2);
+    out << z.real;
+
+    if (z.imag >= 0)
+        out << " + j" << z.imag;
+    else
+        out << " - j" << -z.imag;
+
+    return out;
+}
+};
+
+int main() { cout << "AC CIRCUIT IMPEDANCE CALCULATOR\n";
+
+// Basic complex number operations
+Complex a(10, 5);
+Complex b(4, 2);
+
+cout << "\nBasic Operations:\n";
+
+cout << "A = " << a << endl;
+cout << "B = " << b << endl;
+
+cout << "Addition: " << a + b << endl;
+cout << "Subtraction: " << a - b << endl;
+cout << "Multiplication: " << a * b << endl;
+cout << "Division: " << a / b << endl;
+
+cout << boolalpha;
+cout << "Equality: " << (a == b) << endl;
+
+cout << "Magnitude of A: "
+     << a.magnitude() << endl;
+
+// RLC circuit values
+double R = 10.0;
+double XL = 5.0;
+double XC = 10.0;
+
+// Individual impedances
+Complex ZR(R, 0);
+Complex ZL(0, XL);
+Complex ZC(0, -XC);
+
+// Series RLC impedance
+Complex Zseries = ZR + ZL + ZC;
+
+cout << "\nSeries RLC Circuit:\n";
+cout << "Impedance: " << Zseries << endl;
+cout << "Magnitude: "
+     << Zseries.magnitude() << endl;
+
+// Parallel RLC impedance
+Complex Zparallel =
+    (ZR * ZL) / (ZR + ZL);
+
+Zparallel =
+    (Zparallel * ZC) / (Zparallel + ZC);
+
+cout << "\nParallel RLC Circuit:\n";
+cout << "Impedance: " << Zparallel << endl;
+cout << "Magnitude: "
+     << Zparallel.magnitude() << endl;
+
+// Division by zero test
+cout << "\nDivision by Zero Test:\n";
+
+try {
+    Complex zero(0, 0);
+    Complex result = a / zero;
+    cout << result << endl;
+}
+catch (const domain_error& e) {
+    cout << "Error: " << e.what() << endl;
+}
+
+return 0;
+}
+
+B. Expected Output Expected output for the supplied program, using the given component values. AC CIRCUIT IMPEDANCE CALCULATOR
+
+Basic Operations: A = 10.00 + j5.00 B = 4.00 + j2.00 Addition: 14.00 + j7.00 Subtraction: 6.00 + j3.00 Multiplication: 30.00 + j40.00 Division: 2.50 + j0.00 Equality: false Magnitude of A: 11.18
+
+Series RLC Circuit: Impedance: 10.00 - j5.00 Magnitude: 11.18
+
+Parallel RLC Circuit: Impedance: 5.00 + j5.00 Magnitude: 7.07
+
+Division by Zero Test: Error: Division by zero impedance
+
+C. Hand Calculation – Series RLC Circuit Given:
+
+Resistance (R=10\ \Omega)
+Inductive reactance (X_L=5\ \Omega)
+Capacitive reactance (X_C=10\ \Omega) The individual impedances are: [ Z_R=10+j0 ]
+[ Z_L=0+j5 ]
+
+[ Z_C=0-j10 ]
+
+Total series impedance: [ Z=Z_R+Z_L+Z_C ]
+
+[ Z=10+j5-j10 ]
+
+[ \boxed{Z=10-j5\ \Omega} ]
+
+Magnitude: [ |Z|=\sqrt{10^2+(-5)^2} ]
+
+[ \boxed{|Z|=11.18\ \Omega} ]
+
+D. Hand Calculation – Parallel RLC Circuit Using: [ Z_p=\frac{Z_1Z_2}{Z_1+Z_2} ]
+
+First, combine resistor and inductor: [ Z_{RL}=\frac{10(j5)}{10+j5} ]
+
+[ Z_{RL}=2+j4 ]
+
+Now combine this with the capacitor: [ Z_p=\frac{(2+j4)(-j10)}{(2+j4)-j10} ]
+
+[ Z_p=\frac{40-j20}{2-j6} ]
+
+[ \boxed{Z_p=5+j5\ \Omega} ]
+
+Magnitude: [ |Z_p|=\sqrt{5^2+5^2} ]
+
+[ \boxed{|Z_p|=7.07\ \Omega} ]
+
+Both calculated results match the program's expected output. E. Division by zero test The program attempts: Complex zero(0, 0); Complex result = a / zero;
+
+The denominator becomes: [ 0^2+0^2=0 ]
+
+The program throws a domain_error and catches it safely instead of performing invalid division. 5. Stage 4 – Defend the Design (2 Marks) A. Comparison with std::complex Custom Complex class std::complex Designed manually Available in C++ standard library Requires implementing operators Operators are already available Requires manual memory-free arithmetic logic Automatically handles complex arithmetic Gives control over class design Provides a standard reusable implementation Useful for learning operator overloading Useful in practical applications
+
+Alternative implementation using std::complex: #include #include using namespace std;
+
+int main() { complex a(10, 5); complex b(4, 2);
+
+cout << "Addition: " << a + b << endl;
+cout << "Subtraction: " << a - b << endl;
+cout << "Multiplication: " << a * b << endl;
+cout << "Division: " << a / b << endl;
+
+cout << "Magnitude: " << abs(a) << endl;
+
+return 0;
+}
+
+B. Why is each constructor needed?
+
+Default constructor initializes a complex number to zero.
+Single-parameter constructor creates a real number with zero imaginary part.
+Two-parameter constructor initializes both real and imaginary components. C. Why are the operators needed?
+combines impedances in series.
+calculates the difference between complex values.
+supports complex multiplication.
+/ calculates parallel impedance.
+== checks whether two complex numbers are equal.
+<< displays impedance in readable rectangular form. D. One remaining limitation The custom Complex class uses double floating-point values. Floating-point calculations can introduce small rounding errors. The equality operator therefore uses a small tolerance instead of directly comparing the two values.
+The division check also uses a small threshold, so extremely small but nonzero impedances may be treated as zero. 6. Alternative Concept and Complexity Analysis If std::complex is used instead of the custom Complex class, the implementation becomes shorter because the library already provides constructors, arithmetic operators and magnitude calculation.
+
+Example: #include using namespace std;
+
+complex ZR(10, 0); complex ZL(0, 5); complex ZC(0, -10);
+
+complex Zseries = ZR + ZL + ZC;
+
+complex Zparallel = 1.0 / (1.0 / ZR + 1.0 / ZL + 1.0 / ZC);
+
+For safe division, the program should still check whether the denominator is zero before performing the operation. Complexity comparison Operation Custom Complex std::complex Addition O(1) O(1) Subtraction O(1) O(1) Multiplication O(1) O(1) Division O(1) O(1) Equality O(1) O(1) Magnitude O(1) O(1) Storage Two doubles Two doubles
+
+Both implementations require constant time for each arithmetic operation and constant space.
+
+Evaluation: The custom class is useful for understanding constructors and operator overloading. std::complex is more suitable for real-world applications because it is standardized, reusable and already tested. 7. Conclusion The Complex class was successfully designed and implemented using constructors and operator overloading. The program performs addition, subtraction, multiplication, division and equality comparison. It also calculates series and parallel RLC circuit impedance and displays the magnitude of the results.
+
+The division-by-zero test demonstrates safe exception handling. The comparison with std::complex shows that a custom class provides learning and design control, while the standard library offers a simpler solution for practical applications.

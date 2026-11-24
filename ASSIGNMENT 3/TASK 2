@@ -1,0 +1,138 @@
+Problem Context: Hospital Prescription Records
+
+Aim To implement shallow and deep copying in C++ using copy constructors, copy assignment operators and destructors. To ensure that copied prescription objects maintain independent dynamically allocated memory.
+Theory A copy constructor creates a new object from an existing object.
+Shallow Copy: Copies the pointer address, causing two objects to share the same memory.
+Deep Copy: Allocates separate memory and copies the actual data.
+Copy Assignment: Copies the contents of one existing object into another.
+Destructor: Releases dynamically allocated memory. Rule of Three: If a class requires a custom destructor, copy constructor or copy assignment operator, it generally needs all three.
+Algorithm
+Start the program.
+Create a Prescription class.
+Declare an integer and a dynamically allocated string array.
+Implement a deep-copying copy constructor.
+Implement the copy assignment operator.
+Check for self-assignment.
+Implement the destructor to release memory.
+Create prescription objects.
+Modify copied objects independently.
+Display the results.
+Stop the program.
+C++ Program (Complete Code) #include #include using namespace std;
+class Prescription { int n; string* medicines;
+
+public: explicit Prescription(int count) : n(count), medicines(new string[count]) {}
+
+// TODO 1: Deep Copy Constructor
+Prescription(const Prescription& other)
+    : n(other.n), medicines(new string[other.n]) {
+    for (int i = 0; i < n; i++) {
+        medicines[i] = other.medicines[i];
+    }
+}
+
+// TODO 2: Copy Assignment Operator
+Prescription& operator=(const Prescription& other) {
+    if (this != &other) {
+        string* temp = new string[other.n];
+
+        for (int i = 0; i < other.n; i++) {
+            temp[i] = other.medicines[i];
+        }
+
+        delete[] medicines;
+        medicines = temp;
+        n = other.n;
+    }
+
+    return *this;
+}
+
+// TODO 3: Destructor
+~Prescription() {
+    delete[] medicines;
+}
+
+void set(int i, const string& m) {
+    medicines[i] = m;
+}
+
+string get(int i) const {
+    return medicines[i];
+}
+};
+
+int main() { Prescription p(2);
+
+p.set(0, "Paracetamol");
+p.set(1, "ORS");
+
+Prescription q = p;
+
+q.set(1, "Cetirizine");
+
+Prescription r(1);
+r = p;
+
+p.set(0, "Ibuprofen");
+
+cout << p.get(0) << ' ' << p.get(1)
+     << " | " << q.get(0) << ' ' << q.get(1)
+     << " | " << r.get(0) << ' ' << r.get(1)
+     << '\n';
+
+return 0;
+}
+
+Expected Output Ibuprofen ORS | Paracetamol Cetirizine | Paracetamol ORS
+
+Explanation
+
+Prescription q = p; calls the copy constructor.
+q receives a separate medicine array.
+Changing q does not affect p.
+r = p; calls the copy assignment operator.
+Changing p does not affect r.
+The destructor releases the allocated memory when each object is destroyed.
+Memory Diagrams Shallow Copy Object p Object q +---------+ +---------+ | pointer |--------------| | +---------+ | | pointer | | +---------+ v Shared Memory +-------------+ | Paracetamol | | ORS | +-------------+
+Both objects point to the same memory. This can cause changes to affect both objects and can result in double deletion.
+
+Deep Copy Object p Object q +---------+ +---------+ | pointer | | pointer | +----|----+ +----|----+ | | v v Memory 1 Memory 2 +-------------+ +-------------+ | Paracetamol | | Paracetamol | | ORS | | ORS | +-------------+ +-------------+
+
+Each object has its own independent memory. 8. Three Situations Where Copy Constructor Is Called
+
+When an object is initialized using another object.
+When an object is passed to a function by value.
+When an object is returned from a function by value, if copy elision does not eliminate the copy.
+Experimental Investigation Experiment 1: Copy constructor message
+Add this statement inside the copy constructor: cout << "Copy constructor called" << endl;
+
+Passing an object by value generally invokes the copy constructor. Passing by const reference avoids creating a parameter copy.
+
+Experiment 2: Self-assignment p = p;
+
+The condition this != &other prevents unnecessary memory allocation and deletion.
+
+Experiment 3: Address Sanitizer
+
+Compile using: g++ -std=c++17 -Wall -Wextra -fsanitize=address -g q2.cpp -o q2
+
+Execute: ./q2
+
+The deep-copy implementation should execute without memory errors.
+
+If the custom copy constructor is deleted, the compiler-generated copy constructor performs a shallow copy. Both objects then share the same pointer, potentially causing a heap-use-after-free or double-free error under AddressSanitizer.
+
+Experiment 4: Copy timing Medicines Expected Complexity 10 O(n) 1,000 O(n) 100,000 O(n)
+
+Copying takes linear time because every medicine name must be copied. 10. Alternative Concept and Complexity Analysis If std::vectorstd::string is used instead of a dynamically allocated array, the compiler-generated copy constructor automatically performs an independent deep copy.
+
+Example: #include #include using namespace std;
+
+class Prescription { vector medicines;
+
+public: Prescription(int n) : medicines(n) {} };
+
+Method Time Complexity Space Complexity Shallow copy O(1) O(1) additional Deep copy using array O(n) O(n) Deep copy using vector O(n) O(n)
+
+The vector approach follows the Rule of Zero because memory management is handled automatically. 11. Conclusion Thus, deep copying was successfully implemented using a copy constructor, copy assignment operator and destructor. The copied prescription objects maintain independent memory, preventing unwanted modifications and double deletion.
